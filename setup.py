@@ -3,7 +3,7 @@ import sys, os
 
 version = '0.1'
 
-setup(name='PinyinCopybook',
+setup(name='pinyinCopybook',
       version=version,
       description="拼音汉字田字格A4模版, 排版后生成Pillow Image",
       long_description="""\
