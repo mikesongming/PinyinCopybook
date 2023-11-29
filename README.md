@@ -1,3 +1,3 @@
 # PinyinCopybook
 
-拼音汉字田字格A4排版后生成png，python纯
+拼音汉字田字格A4模版, 排版后生成Pillow Image, python纯

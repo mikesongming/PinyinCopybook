@@ -5,7 +5,7 @@ version = '0.1'
 
 setup(name='PinyinCopybook',
       version=version,
-      description="拼音汉字田字格A4排版后生成png",
+      description="拼音汉字田字格A4模版, 排版后生成Pillow Image",
       long_description="""\
 """,
       classifiers=['Development Status :: 3 - Alpha',
