@@ -12,8 +12,11 @@ class Template:
         return A4Page()
 
     @classmethod
-    def generate_a4_grid_page(cls, **kwargs):
-        return PinYinTianZiGePage(**kwargs)
+    def generate_a4_grid_page(cls, grid_size: str, **kwargs):
+        if grid_size == 'big':
+            return PinYinTianZiGePage(**kwargs)
+        elif grid_size == 'small':
+            return PinYinTianZiGePage2(**kwargs)
 
 
 class A4Page:
@@ -66,12 +69,12 @@ class A4Page:
 
 
 class PinYinTianZiGePage(A4Page):
-
+    COLS = 8
+    ROWS = 8
     GRID_WIDTH = 60
     GRID_HEIGHT = 84
+
     GRID_PADDING = 5
-    ROWS = 12
-    COLS = 8
     GRID_LINE_COLOR = (39,232,25)
     GRID_INNER_LINE_COLOR = (204,204,204)
     GRID_DASH_UNIT_LEN = 2
@@ -102,9 +105,9 @@ class PinYinTianZiGePage(A4Page):
 
         self.next_grid_xy = (self._padding[0] + self.GRID_PADDING, self._padding[1] + self.GRID_PADDING)
 
-    def add_contents(self, hanzis: List[str], pinyins: List[str], is_hanzis: List[bool], is_punctuations: List[bool]):
-        for hanzi, pinyin, is_hanzi, is_punctuation in zip(hanzis, pinyins, is_hanzis, is_punctuations):
-            self.add_content(hanzi, pinyin, is_hanzi, is_punctuation)
+    # def add_contents(self, hanzis: List[str], pinyins: List[str], is_hanzis: List[bool], is_punctuations: List[bool]):
+    #     for hanzi, pinyin, is_hanzi, is_punctuation in zip(hanzis, pinyins, is_hanzis, is_punctuations):
+    #         self.add_content(hanzi, pinyin, is_hanzi, is_punctuation)
 
     def add_content(self, hanzi: str, pinyin: str, is_hanzi=True, is_punctuation=False) -> bool:
         """
@@ -120,13 +123,13 @@ class PinYinTianZiGePage(A4Page):
             bool: 如果字符成功写入页面, 返回True; 否则返回False, 例如页面已满
         """
         if is_hanzi:
-            self._draw_hanzi_pinyin(hanzi, pinyin)
+            return self._draw_hanzi_pinyin(hanzi, pinyin)
         elif is_punctuation:
-            self._draw_punctuation(hanzi)
+            return self._draw_punctuation(hanzi)
         else:
-            self._draw_others(hanzi, pinyin)
+            return self._draw_others(hanzi, pinyin)
 
-    def _draw_hanzi_pinyin(self, hanzi, pinyin):
+    def _draw_hanzi_pinyin(self, hanzi, pinyin) -> bool:
         grid_bbox, nnext_grid_xy = self._next_bbox(self.GRID_WIDTH, self.GRID_HEIGHT)
 
         if grid_bbox is None:
@@ -210,14 +213,19 @@ class PinYinTianZiGePage(A4Page):
         if y < pt2[1]:
             self.draw.line((pt1[0], y, pt1[0], pt2[1]), fill=self.GRID_INNER_LINE_COLOR, width=1)
 
-    def _draw_punctuation(self, hanzi):
+    def _draw_punctuation(self, hanzi) -> bool:
         grid_start_x, grid_start_y = self.next_grid_xy
         pinyin_start_xy = (grid_start_x + self.PUNCTUATION_SPACING, grid_start_y+self.GRID_SEP_HEIGHT + self.PUNCTUATION_PADDING_Y)
-        self.draw.text(pinyin_start_xy, hanzi,font=Fonts(self.PUNCTUATION_FONT_SIZE).TYZ_KAITI,fill=(0,0,0))
+        font = Fonts(self.PUNCTUATION_FONT_SIZE).TYZ_KAITI
+        tlen = self.draw.textlength(hanzi, font)
+        if tlen > self.GRID_WIDTH:
+            font = Fonts(self.PUNCTUATION_FONT_SIZE-4).TYZ_KAITI
+            tlen = self.draw.textlength(hanzi, font)
+        self.draw.text(pinyin_start_xy, hanzi,font=font, fill=(0,0,0))
         self.next_grid_xy = (grid_start_x+self.GRID_WIDTH, grid_start_y)
         return True
 
-    def _draw_others(self, hanzi, pinyin):
+    def _draw_others(self, hanzi, pinyin) -> bool:
         font = Fonts(self.PUNCTUATION_FONT_SIZE).KAITI
         tlen = self.draw.textlength(hanzi, font=font)
         num_grids = int(np.ceil(tlen/self.GRID_WIDTH))
@@ -253,3 +261,44 @@ class PinYinTianZiGePage(A4Page):
         grid_bbox = ((next_grid_x, next_grid_y), (grid_right_x, grid_lower_y))
         nnext_grid_xy = (grid_right_x, next_grid_y)
         return grid_bbox, nnext_grid_xy
+
+
+class PinYinTianZiGePage2(PinYinTianZiGePage):
+    """
+    格子更小，适合段落阅读
+    """
+    COLS = 12
+    ROWS = 11
+    GRID_WIDTH = 40
+    GRID_HEIGHT = 60
+
+    PINYIN_FONT_SIZE=14
+    PINYIN_UP_PADDING=3
+    PINYIN_LINE1_DY = 3
+    PINYIN_LINE2_DY = 11
+    HANZI_FONT_SIZE=32
+    HANZI_PADDING_X=5
+    HANZI_PADDING_Y=3
+    PUNCTUATION_SPACING = 5
+    PUNCTUATION_FONT_SIZE = 24
+    PUNCTUATION_PADDING_Y = 9
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.show_grid = True
+        self.show_tianzi = False
+        self.show_pinyin_lines = False
+
+    def _draw_pinyin_at(self, xy: tuple[int], pinyin: str):
+        pinyin_start_x, pinyin_start_y = xy
+        font=Fonts(self.PINYIN_FONT_SIZE).PINYIN
+
+        tlen = self.draw.textlength(pinyin, font=font)
+        if tlen > self.GRID_WIDTH:
+            font=Fonts(self.PINYIN_FONT_SIZE-4).PINYIN
+            tlen = self.draw.textlength(pinyin, font=font)
+
+        pinyin_start_x += int((self.GRID_WIDTH - tlen)/2)
+        pinyin_start_y += self.PINYIN_UP_PADDING
+        pinyin_start_xy = (pinyin_start_x, pinyin_start_y)
+        self.draw.text(pinyin_start_xy, pinyin, font=font, fill=(0,0,0))
