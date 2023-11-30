@@ -1,2 +1,4 @@
 include pinyinCopybook/fonts/PinYin.ttf
 include pinyinCopybook/fonts/TYZKai.ttf
+include pinyinCopybook/fonts/simfang.ttf
+include pinyinCopybook/fonts/Kaiti.ttf
