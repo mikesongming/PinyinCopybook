@@ -1,0 +1,38 @@
+# pyproject.toml
+
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pinyinCopybook"
+version = "0.1"
+description="拼音汉字田字格A4模版, 排版后生成Pillow Image"
+readme = "README.md"
+authors = [{ name = "Mike Song", email = "gnosoir@hotmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: reStructuredText",
+]
+keywords = ["pinyin", "copybook"]
+dependencies = [
+    "Pillow>=9.4.0",
+    "numpy>=1.24",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = ["autopep8", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/mikesongming/PinyinCopybook"
+Issues = "https://github.com/mikesongming/PinyinCopybook/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+    exclude=['ez_setup', 'examples', 'tests']
