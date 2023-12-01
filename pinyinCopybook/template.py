@@ -12,10 +12,10 @@ class Template:
         return A4Page()
 
     @classmethod
-    def generate_a4_grid_page(cls, grid_size: str, **kwargs):
-        if grid_size == 'big':
+    def generate_a4_grid_page(cls, rows: int, **kwargs):
+        if rows == 8:
             return PinYinTianZiGePage(**kwargs)
-        elif grid_size == 'small':
+        elif rows == 12:
             return PinYinTianZiGePage2(**kwargs)
 
 
