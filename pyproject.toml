@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pinyinCopybook"
-version = "0.1"
+version = "0.2"
 description="拼音汉字田字格A4模版, 排版后生成Pillow Image"
 readme = "README.md"
 authors = [{ name = "Mike Song", email = "gnosoir@hotmail.com" }]

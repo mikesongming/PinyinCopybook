@@ -28,6 +28,6 @@ def test_a4_grid(page_with_outline, sample_content):
             if not page.add_content(h, p, ih, ip):
                 break
 
-    page.show()
+    # page.show()
     page.export_to_png("tests/a4.png")
     assert Path("tests/a4.png").exists()

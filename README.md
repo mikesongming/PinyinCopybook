@@ -1,14 +1,14 @@
 # pinyinCopybook
 
-拼音汉字田字格A4模版, 排版后生成Pillow Image, python纯
+拼音汉字田字格A4模版, 排版后生成Pillow Image, 不依赖外部排版包
 
 ==================================
 
 ## 使用说明
 
-目前支持A4纸，每行8格和12格两种排版。如有其他格式需求，可以自行扩展。
+目前支持A4纸，每行8格、12格汉字拼音混排，以及纯拼音版式。如有其他格式需求，可以自行扩展。
 
-* 每页8行，每行8格，使用:
+* 每页8行，每行8格拼音混排，使用:
 
 ``` python
 from pinyinCopybook import Template
@@ -16,10 +16,16 @@ from pinyinCopybook import Template
 page = Template.generate_a4_grid_page(8)
 ```
 
-* 每页11行，每行12格，使用:
+* 每页11行，每行12格拼音混排，使用:
 
 ``` python
 page = Template.generate_a4_grid_page(12)
+```
+
+* 纯拼音，使用:
+
+``` python
+page = Template.generate_a4_pinyin_page()
 ```
 
 * 添加汉字和对应拼音
@@ -53,10 +59,14 @@ success = page.add_content('！', '！', 0, 1)
 
 ## 页面效果
 
-* 每行8格，适用阅读入门阶段
+* 每行8格拼音混排，适用阅读入门阶段
 
     <img alt="每行8格" src="tests/a4_big.png" />
 
-* 每行8格，适用开始段落阅读阶段
+* 每行12格拼音混排，适用开始段落阅读阶段
 
     <img alt="每行12格" src="tests/a4.png" />
+
+* 纯拼音版式，适合强化整体音节拼读
+
+    <img alt="纯拼音" src="tests/a4_pinyin.png" />

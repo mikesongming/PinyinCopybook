@@ -18,6 +18,9 @@ class Template:
         elif rows == 12:
             return PinYinTianZiGePage2(**kwargs)
 
+    @classmethod
+    def generate_a4_pinyin_page(cls, **kwargs):
+        return PinYinPage(**kwargs)
 
 class A4Page:
 
@@ -104,6 +107,9 @@ class PinYinTianZiGePage(A4Page):
         self.CONTENT_MAX_Y = self.height - self._padding[3]
 
         self.next_grid_xy = (self._padding[0] + self.GRID_PADDING, self._padding[1] + self.GRID_PADDING)
+
+    def new_line(self):
+        self.next_grid_xy = (self._padding[0] + self.GRID_PADDING, self.next_grid_xy[1] + self.GRID_HEIGHT)
 
     # def add_contents(self, hanzis: List[str], pinyins: List[str], is_hanzis: List[bool], is_punctuations: List[bool]):
     #     for hanzi, pinyin, is_hanzi, is_punctuation in zip(hanzis, pinyins, is_hanzis, is_punctuations):
@@ -215,15 +221,20 @@ class PinYinTianZiGePage(A4Page):
 
     def _draw_punctuation(self, hanzi) -> bool:
         grid_start_x, grid_start_y = self.next_grid_xy
+        if (grid_start_y + self.GRID_HEIGHT) > self.CONTENT_MAX_Y:
+            return False
         pinyin_start_xy = (grid_start_x + self.PUNCTUATION_SPACING, grid_start_y+self.GRID_SEP_HEIGHT + self.PUNCTUATION_PADDING_Y)
         font = Fonts(self.PUNCTUATION_FONT_SIZE).TYZ_KAITI
         tlen = self.draw.textlength(hanzi, font)
         if tlen > self.GRID_WIDTH:
             font = Fonts(self.PUNCTUATION_FONT_SIZE-4).TYZ_KAITI
             tlen = self.draw.textlength(hanzi, font)
-        self.draw.text(pinyin_start_xy, hanzi,font=font, fill=(0,0,0))
         self.next_grid_xy = (grid_start_x+self.GRID_WIDTH, grid_start_y)
-        return True
+        self.draw.text(pinyin_start_xy, hanzi,font=font, fill=(0,0,0))
+        if (self.next_grid_xy[0] > self.CONTENT_MAX_X) and (self.next_grid_xy[1]+2*self.GRID_HEIGHT > self.CONTENT_MAX_Y):
+            return False
+        else:
+            return True
 
     def _draw_others(self, hanzi, pinyin) -> bool:
         font = Fonts(self.PUNCTUATION_FONT_SIZE).KAITI
@@ -302,3 +313,182 @@ class PinYinTianZiGePage2(PinYinTianZiGePage):
         pinyin_start_y += self.PINYIN_UP_PADDING
         pinyin_start_xy = (pinyin_start_x, pinyin_start_y)
         self.draw.text(pinyin_start_xy, pinyin, font=font, fill=(0,0,0))
+
+
+class PinYinPage(PinYinTianZiGePage):
+
+    GRID_WIDTH = 60
+    GRID_HEIGHT = 36
+
+    GRID_PADDING = 5
+    GRID_LINE_COLOR = (39,232,25)
+    GRID_INNER_LINE_COLOR = (204,204,204)
+    GRID_DASH_UNIT_LEN = 2
+    PINYIN_FONT_SIZE=14
+    PINYIN_UP_PADDING=6
+    PINYIN_SPACING = 3
+    PINYIN_LINE1_DY = 5
+    PINYIN_LINE2_DY = 13
+    PUNCTUATION_SPACING = 5
+    PUNCTUATION_PADDING_Y = 6
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.CONTENT_MAX_X = self.width - self._padding[2]
+        self.CONTENT_MAX_Y = self.height - self._padding[3]
+
+        self.next_grid_xy = (self._padding[0] + self.GRID_PADDING, self._padding[1] + self.GRID_PADDING)
+
+    def add_content(self, hanzi: str, pinyin: str, is_hanzi=True, is_punctuation=False) -> bool:
+        if is_hanzi:
+            return self._draw_hanzi_pinyin(hanzi, pinyin)
+        elif is_punctuation:
+            return self._draw_punctuation(hanzi)
+        else:
+            return self._draw_others(hanzi, pinyin)
+
+    def _draw_hanzi_pinyin(self, hanzi, pinyin) -> bool:
+        font = Fonts(self.PINYIN_FONT_SIZE).PINYIN
+        tlen = int(np.ceil(self.draw.textlength(pinyin, font)))
+
+        grid_bbox, nnext_grid_xy = self._next_lines(tlen, 1)
+
+        if grid_bbox is None:
+            return False
+        else:
+            self._draw_pinyin_at(grid_bbox[0], pinyin)
+            self.next_grid_xy = nnext_grid_xy
+            return True
+
+    def _draw_pinyin_lines_at(self, xy: tuple[int], line_len: int):
+            a1 = (xy[0], xy[1]+self.PINYIN_UP_PADDING+self.PINYIN_LINE1_DY)
+            b1 = (xy[0] + line_len, a1[1])
+            a2 = (xy[0], xy[1]+self.PINYIN_UP_PADDING+self.PINYIN_LINE2_DY)
+            b2 = (xy[0] + line_len, a2[1])
+
+            a0 = (xy[0], a1[1]-8)
+            b0 = (a0[0]+line_len, a0[1])
+            a3 = (xy[0], a2[1]+8)
+            b3 = (a3[0]+line_len, a3[1])
+
+            self.draw.line((a0,b0), fill=self.GRID_INNER_LINE_COLOR, width=1)
+            self._draw_horizontal_dashed_line(a1, b1)
+            self._draw_horizontal_dashed_line(a2, b2)
+            self.draw.line((a3,b3), fill=self.GRID_INNER_LINE_COLOR, width=1)
+
+    def _draw_pinyin_at(self, xy: tuple[int], pinyin: str):
+        pinyin_start_x, pinyin_start_y = xy
+        pinyin_start_x += self.PINYIN_SPACING
+        pinyin_start_y += self.PINYIN_UP_PADDING
+        pinyin_start_xy = (pinyin_start_x, pinyin_start_y)
+        self.draw.text(pinyin_start_xy, pinyin, font=Fonts(self.PINYIN_FONT_SIZE).PINYIN, fill=(0,0,0))
+
+    def _draw_hanzi_at(self, xy: tuple[int], hanzi: str):
+        pass
+
+    def _draw_punctuation(self, hanzi) -> bool:
+        font = Fonts(self.PINYIN_FONT_SIZE).KAITI
+        tlen = self.draw.textlength(hanzi, font)
+        if tlen > self.GRID_WIDTH:
+            font = Fonts(self.PINYIN_FONT_SIZE-4).KAITI
+            tlen = self.draw.textlength(hanzi, font)
+        tlen = int(np.ceil(tlen))
+
+        grid_bbox, nnext_grid_xy = self._next_lines(tlen, 2)
+
+        if grid_bbox is None:
+            return False
+        else:
+            grid_start_xy, grid_end_xy = grid_bbox
+
+            grid_start_x, grid_start_y = grid_start_xy
+            pinyin_start_xy = (grid_start_x, grid_start_y + self.PUNCTUATION_PADDING_Y)
+            self.draw.text(pinyin_start_xy, hanzi,font=font, fill=(0,0,0))
+
+            self.next_grid_xy = nnext_grid_xy
+
+        return True
+
+    def _draw_others(self, hanzi, pinyin) -> bool:
+        font = Fonts(self.PINYIN_FONT_SIZE).PINYIN
+        tlen = int(np.ceil(self.draw.textlength(hanzi, font=font)))
+
+        grid_bbox, nnext_grid_xy = self._next_lines(tlen, 3)
+
+        if grid_bbox is None:
+            return False
+        else:
+            grid_start_x, grid_start_y = grid_bbox[0]
+            start_xy = (grid_start_x + self.PUNCTUATION_SPACING, grid_start_y + self.PUNCTUATION_PADDING_Y)
+            self.draw.text(start_xy, hanzi,font=font,fill=(0,0,0))
+
+            self.next_grid_xy = nnext_grid_xy
+            return True
+
+    def _next_lines(self, tlen: int, ctype: int = 1):
+        """
+        计算文本box以及划线范围
+
+        Args:
+            tlen (int): 文本长度
+            ctype (int): 文本类型, {1: 拼音, 2: 标点符号, 3: 其他}
+
+        Returns:
+        """
+        grid_start_xy = self.next_grid_xy
+
+        if ctype == 1:  # 拼音
+            line_len = tlen + 2*self.PINYIN_SPACING
+            grid_bbox, nnext_grid_xy = self._next_bbox(line_len, self.GRID_HEIGHT)
+            if grid_bbox is None:
+                return None, None
+            if grid_bbox[0] != grid_start_xy:
+                self._draw_pinyin_lines_at(grid_start_xy, self.CONTENT_MAX_X-grid_start_xy[0])
+            self._draw_pinyin_lines_at(grid_bbox[0], line_len)
+            return grid_bbox, nnext_grid_xy
+        elif ctype == 2:    # 标点符号
+            line_len = tlen
+            grid_bbox, nnext_grid_xy = self._next_bbox(line_len, self.GRID_HEIGHT)
+
+            if grid_bbox is None:
+                return None, None
+
+            if grid_bbox[0] != grid_start_xy:
+                nnext_grid_xy = grid_bbox[0]
+                grid_bbox = (grid_start_xy, None)
+                line_len = self.CONTENT_MAX_X - grid_start_xy[0]
+
+            self._draw_pinyin_lines_at(grid_start_xy, line_len)
+
+            return grid_bbox, nnext_grid_xy
+        elif ctype == 3:    # 其他
+            line_len = tlen + 2*self.PUNCTUATION_SPACING
+            grid_bbox, nnext_grid_xy = self._next_bbox(line_len, self.GRID_HEIGHT)
+
+            if grid_bbox is None:
+                return None, None
+
+            if grid_bbox[0] != grid_start_xy:
+                self._draw_pinyin_lines_at(grid_start_xy, self.CONTENT_MAX_X-grid_start_xy[0])
+
+            return grid_bbox, nnext_grid_xy
+
+    def _next_bbox(self, delta_x, delta_y):
+        next_grid_x, next_grid_y = self.next_grid_xy
+
+        if next_grid_x + delta_x > self.CONTENT_MAX_X:
+            # next row
+            next_grid_x = self._padding[0] + self.GRID_PADDING
+            next_grid_y += delta_y
+
+        if next_grid_y + delta_y > self.CONTENT_MAX_Y:
+            # next page
+            return None, None
+
+        grid_right_x = next_grid_x + delta_x
+        grid_lower_y = next_grid_y + delta_y
+
+        grid_bbox = ((next_grid_x, next_grid_y), (grid_right_x, grid_lower_y))
+        nnext_grid_xy = (grid_right_x, next_grid_y)
+        return grid_bbox, nnext_grid_xy
